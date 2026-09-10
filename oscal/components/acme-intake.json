@@ -1,0 +1,452 @@
+{
+  "component-definition": {
+    "uuid": "9f6cdf57-f5ca-421b-968f-0ea86c9899a8",
+    "metadata": {
+      "title": "acme-health-intake \u2014 HIPAA Security Rule component definition",
+      "last-modified": "2026-09-10T18:30:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.3",
+      "links": [
+        {
+          "href": "https://github.com/ashpearce/cgep-capstone",
+          "rel": "source-repository"
+        },
+        {
+          "href": "../profiles/hipaa-intake.json",
+          "rel": "profile"
+        },
+        {
+          "href": "../catalogs/hipaa-security-rule.json",
+          "rel": "catalog"
+        }
+      ],
+      "remarks": "Declared framework: HIPAA Security Rule. Catalog source: NIST SP 800-66 Rev. 2 with 45 CFR 164.x citations as props. GAP-06 (reserved concurrency / DLQ / X-Ray) is deliberately not implemented: it has no HIPAA citation and FRAMEWORKS.md forbids a policy whose primary control comes from an undeclared framework. Evidence props and the evidence link are filled from the pipeline's receipt.json by scripts/oscal-fill-evidence.sh."
+    },
+    "components": [
+      {
+        "uuid": "89475c1c-6e2e-453c-b11e-2ee6bd2b4372",
+        "type": "service",
+        "title": "acme-health-intake (patient intake API)",
+        "description": "Serverless patient-intake workload: API Gateway (HTTP API) -> Lambda handler -> DynamoDB submissions table and S3 uploads bucket, deployed by Terraform from this repository and gated in CI by an OPA/Conftest policy suite before apply-on-merge.",
+        "props": [
+          {
+            "name": "framework",
+            "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+            "value": "hipaa"
+          },
+          {
+            "name": "terraform-root",
+            "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+            "value": "terraform/"
+          },
+          {
+            "name": "policy-gate",
+            "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+            "value": "scripts/policy-gate.sh"
+          },
+          {
+            "name": "evidence-vault",
+            "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+            "value": "acme-health-intake-evidence-8e35a7ab"
+          }
+        ],
+        "control-implementations": [
+          {
+            "uuid": "c9c08a53-efc2-4326-bc69-d63a15d25bd8",
+            "source": "../profiles/hipaa-intake.json",
+            "description": "Seven HIPAA gaps (GAP-01..05, 07, 08) closed in Terraform and enforced by seven Rego policies evaluated against the Terraform plan's planned_values in the grc-gate workflow. Every implemented requirement lists the Rego policy and the real Terraform addresses that implement it.",
+            "implemented-requirements": [
+              {
+                "uuid": "dfb3e047-6758-4ed6-bf6d-f8e17818c385",
+                "control-id": "hipaa-164.312-a-2-iv",
+                "description": "ePHI at rest is encrypted with a customer-managed KMS key (aws_kms_key.phi, rotation enabled). The uploads bucket uses SSE-KMS with that key (GAP-01) and the submissions table uses customer-managed encryption via kms_key_arn (GAP-02). Policies gap01/gap02 evaluate planned_values; gap02 distinguishes AWS-owned, AWS-managed and customer-managed states and only accepts the third.",
+                "props": [
+                  {
+                    "name": "hipaa-section",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "164.312(a)(2)(iv)"
+                  },
+                  {
+                    "name": "gap-id",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "GAP-01"
+                  },
+                  {
+                    "name": "gap-id",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "GAP-02"
+                  },
+                  {
+                    "name": "policy",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "policies/gap01_s3_cmk.rego"
+                  },
+                  {
+                    "name": "policy",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "policies/gap02_dynamodb_cmk.rego"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_kms_key.phi"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_kms_alias.phi"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_s3_bucket_server_side_encryption_configuration.uploads"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_dynamodb_table.intake"
+                  },
+                  {
+                    "name": "implementation-status",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "implemented"
+                  },
+                  {
+                    "name": "evidence-run-id",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "34511736584"
+                  },
+                  {
+                    "name": "evidence-commit",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "70f782671404c324beeacabbc41d0e7813368c9d"
+                  },
+                  {
+                    "name": "evidence-sha256",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "eccb197c2caf1ea7dda50d29b4ed2f5753c1601f4def7376f4100fcc12c429a2"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "#1a11d80f-6304-4b56-b505-06e9a7c329a2",
+                    "rel": "evidence",
+                    "text": "Signed evidence bundle for the apply run (version-pinned)"
+                  }
+                ]
+              },
+              {
+                "uuid": "da43004c-a6c3-48cf-b592-66f9e2695a39",
+                "control-id": "hipaa-164.312-e-1",
+                "description": "ePHI in transit is protected two ways. The uploads bucket policy denies any request without aws:SecureTransport (GAP-03). The intake Lambda runs inside the VPC on private subnets with a dedicated security group, and reaches S3 and DynamoDB only through gateway VPC endpoints, so traffic never leaves the AWS network (GAP-05). Policies gap03/gap05 evaluate planned_values.",
+                "props": [
+                  {
+                    "name": "hipaa-section",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "164.312(e)(1)"
+                  },
+                  {
+                    "name": "gap-id",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "GAP-03"
+                  },
+                  {
+                    "name": "gap-id",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "GAP-05"
+                  },
+                  {
+                    "name": "policy",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "policies/gap03_s3_tls.rego"
+                  },
+                  {
+                    "name": "policy",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "policies/gap05_lambda_vpc.rego"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_s3_bucket_policy.uploads"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "data.aws_iam_policy_document.uploads_tls"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_lambda_function.intake"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_security_group.lambda"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_route_table.private"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_vpc_endpoint.s3"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_vpc_endpoint.dynamodb"
+                  },
+                  {
+                    "name": "implementation-status",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "implemented"
+                  },
+                  {
+                    "name": "evidence-run-id",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "34511736584"
+                  },
+                  {
+                    "name": "evidence-commit",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "70f782671404c324beeacabbc41d0e7813368c9d"
+                  },
+                  {
+                    "name": "evidence-sha256",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "eccb197c2caf1ea7dda50d29b4ed2f5753c1601f4def7376f4100fcc12c429a2"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "#1a11d80f-6304-4b56-b505-06e9a7c329a2",
+                    "rel": "evidence",
+                    "text": "Signed evidence bundle for the apply run (version-pinned)"
+                  }
+                ]
+              },
+              {
+                "uuid": "2485ae26-ae27-4122-aa0c-e3a538768aa8",
+                "control-id": "hipaa-164.308-a-7",
+                "description": "Versioning is enabled on the uploads bucket so prior versions of ePHI objects are retained and recoverable (GAP-04). Policy gap04 treats 'Suspended' as non-compliant: it looks versioned but new overwrites are unrecoverable.",
+                "props": [
+                  {
+                    "name": "hipaa-section",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "164.308(a)(7)"
+                  },
+                  {
+                    "name": "gap-id",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "GAP-04"
+                  },
+                  {
+                    "name": "policy",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "policies/gap04_s3_versioning.rego"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_s3_bucket_versioning.uploads"
+                  },
+                  {
+                    "name": "implementation-status",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "implemented"
+                  },
+                  {
+                    "name": "evidence-run-id",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "34511736584"
+                  },
+                  {
+                    "name": "evidence-commit",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "70f782671404c324beeacabbc41d0e7813368c9d"
+                  },
+                  {
+                    "name": "evidence-sha256",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "eccb197c2caf1ea7dda50d29b4ed2f5753c1601f4def7376f4100fcc12c429a2"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "#1a11d80f-6304-4b56-b505-06e9a7c329a2",
+                    "rel": "evidence",
+                    "text": "Signed evidence bundle for the apply run (version-pinned)"
+                  }
+                ]
+              },
+              {
+                "uuid": "268d6a7d-6365-48af-a29a-8943fc01af22",
+                "control-id": "hipaa-164.312-a-1",
+                "description": "The intake Lambda's execution role is scoped to the two calls handler.py actually makes (dynamodb:PutItem on the submissions table, s3:PutObject on the uploads bucket) plus the KMS permissions those writes require; the starter's dynamodb:* and s3:* grants were removed (GAP-07). Policy gap07 filters to the .lambda_inline policy.",
+                "props": [
+                  {
+                    "name": "hipaa-section",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "164.312(a)(1)"
+                  },
+                  {
+                    "name": "gap-id",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "GAP-07"
+                  },
+                  {
+                    "name": "policy",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "policies/gap07_iam_least_privilege.rego"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_iam_role.lambda"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_iam_role_policy.lambda_inline"
+                  },
+                  {
+                    "name": "implementation-status",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "implemented"
+                  },
+                  {
+                    "name": "evidence-run-id",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "34511736584"
+                  },
+                  {
+                    "name": "evidence-commit",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "70f782671404c324beeacabbc41d0e7813368c9d"
+                  },
+                  {
+                    "name": "evidence-sha256",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "eccb197c2caf1ea7dda50d29b4ed2f5753c1601f4def7376f4100fcc12c429a2"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "#1a11d80f-6304-4b56-b505-06e9a7c329a2",
+                    "rel": "evidence",
+                    "text": "Signed evidence bundle for the apply run (version-pinned)"
+                  }
+                ]
+              },
+              {
+                "uuid": "5ae9046a-ae92-464b-bb68-4cf791ba245f",
+                "control-id": "hipaa-164.312-b",
+                "description": "API Gateway access logging is enabled to a CloudWatch log group with a format that includes sourceIp for attribution (GAP-08). Supporting: a multi-region CloudTrail with log file validation, encrypted with the customer-managed key, records control-plane activity.",
+                "props": [
+                  {
+                    "name": "hipaa-section",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "164.312(b)"
+                  },
+                  {
+                    "name": "gap-id",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "GAP-08"
+                  },
+                  {
+                    "name": "policy",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "policies/gap08_apigw_logging.rego"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_apigatewayv2_stage.default"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_cloudwatch_log_group.apigw"
+                  },
+                  {
+                    "name": "terraform-address",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "aws_cloudtrail.main"
+                  },
+                  {
+                    "name": "implementation-status",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "implemented"
+                  },
+                  {
+                    "name": "evidence-run-id",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "34511736584"
+                  },
+                  {
+                    "name": "evidence-commit",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "70f782671404c324beeacabbc41d0e7813368c9d"
+                  },
+                  {
+                    "name": "evidence-sha256",
+                    "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                    "value": "eccb197c2caf1ea7dda50d29b4ed2f5753c1601f4def7376f4100fcc12c429a2"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "#1a11d80f-6304-4b56-b505-06e9a7c329a2",
+                    "rel": "evidence",
+                    "text": "Signed evidence bundle for the apply run (version-pinned)"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "back-matter": {
+      "resources": [
+        {
+          "uuid": "1a11d80f-6304-4b56-b505-06e9a7c329a2",
+          "title": "Signed evidence bundle \u2014 apply run 34511736584",
+          "description": "tar.gz containing the Terraform plan JSON, gate outcome and commit SHA for the run that applied this configuration to main. Sigstore-signed (cosign, keyless, identity pinned to this repository) and stored in the COMPLIANCE-mode Object Lock evidence vault. The href is pinned to the exact S3 object version; verify with: EVIDENCE_VAULT=acme-health-intake-evidence-8e35a7ab bash scripts/verify-evidence.sh 34511736584",
+          "props": [
+            {
+              "name": "run-id",
+              "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+              "value": "34511736584"
+            },
+            {
+              "name": "commit",
+              "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+              "value": "70f782671404c324beeacabbc41d0e7813368c9d"
+            },
+            {
+              "name": "s3-version-id",
+              "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+              "value": "IbiVRxhxLaA5EOyN72Ov2pq4cckEpJ6p"
+            },
+            {
+              "name": "sha256",
+              "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+              "value": "eccb197c2caf1ea7dda50d29b4ed2f5753c1601f4def7376f4100fcc12c429a2"
+            }
+          ],
+          "rlinks": [
+            {
+              "href": "s3://acme-health-intake-evidence-8e35a7ab/runs/34511736584/evidence-34511736584-70f782671404c324beeacabbc41d0e7813368c9d.tar.gz?versionId=IbiVRxhxLaA5EOyN72Ov2pq4cckEpJ6p",
+              "media-type": "application/gzip"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
