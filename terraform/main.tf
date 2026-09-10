@@ -114,7 +114,7 @@ resource "aws_dynamodb_table" "intake" {
   # CAPSTONE GAP-02: PHI at rest under a customer-managed key.
   # HIPAA 164.312(a)(2)(iv).
   server_side_encryption {
-    enabled     = true
+    enabled = false
   }
 }
 
