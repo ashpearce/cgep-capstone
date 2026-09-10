@@ -89,6 +89,8 @@ jobs:
           echo "sha256=$(cat $BUNDLE.sha256)" >> "$GITHUB_OUTPUT"
 
       # ---------- STEP 5: UPLOAD ----------
+      # The receipt is written AFTER the bundle upload because it pins the
+      # bundle's S3 version ID, which only exists once the object is in the vault.
       - name: Upload to evidence vault
         if: always()
         run: |
@@ -105,3 +107,28 @@ jobs:
             --query VersionId --output text)
 
           cat > receipt.json <<-EOF
+          {
+            "run_id": "${{ github.run_id }}",
+            "commit": "${{ github.sha }}",
+            "event": "${{ github.event_name }}",
+            "gate_outcome": "${{ steps.gate.outcome }}",
+            "bundle_key": "$KEY",
+            "version_id": "$VERSION_ID",
+            "sha256": "${{ steps.sign.outputs.sha256 }}"
+          }
+          EOF
+
+          aws s3 cp receipt.json "s3://${{ vars.EVIDENCE_VAULT }}/runs/${{ github.run_id }}/receipt.json"
+          echo "Receipt uploaded; bundle pinned to version $VERSION_ID"
+
+      # ---------- STEP 6: ENFORCE ----------
+      # Sign/upload run with always() so evidence exists even on failure.
+      # This step makes sure a failed gate still fails the job.
+      - name: Enforce gate outcome
+        if: always()
+        run: |
+          if [ "${{ steps.gate.outcome }}" != "success" ]; then
+            echo "Policy gate did not pass (outcome: ${{ steps.gate.outcome }}). Blocking."
+            exit 1
+          fi
+          echo "Policy gate passed."
