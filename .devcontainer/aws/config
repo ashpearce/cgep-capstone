@@ -1,0 +1,11 @@
+[profile cgep-sandbox]
+sso_session = cgep
+sso_account_id = 670163018466
+sso_role_name = AdministratorAccess
+region = us-east-1
+output = json
+
+[sso-session cgep]
+sso_start_url = https://identitycenter.amazonaws.com/ssoins-72232307964c7e70
+sso_region = us-east-1
+sso_registration_scopes = sso:account:access
