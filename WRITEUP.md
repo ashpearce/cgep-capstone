@@ -131,3 +131,5 @@ bash scripts/validate-oscal.sh                                 # 3 x VALID
 - **State bucket under the CMK.** The state bucket is SSE-S3 for the same reason as the vault; a stricter posture would encrypt it with the CMK and grant the gate role in the key policy.
 - **Retention.** One-day Object Lock is a sandbox setting. The verifier reports the retention date so a grader can see it; a production deployment would set years and a legal hold policy.
 - **GAP-06.** Declined for framework reasons, not difficulty. If a second framework were declared (SOC 2 A1.2 or NIST 800-53 CP-10), it is a small change.
+- **Patient data lifecycle.** Deletion and export of a patient's submission (DynamoDB item plus S3 attachment) are out of the starter's scope and not implemented. Under HIPAA this is a documentation and process control today; a technical control would be a lifecycle rule plus a deletion Lambda with its own audit trail.
+- **API-layer authentication.** The endpoint is unauthenticated by design of the starter. Cognito or an API key on the stage is the named extension; not attempted.
