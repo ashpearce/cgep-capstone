@@ -1,0 +1,28 @@
+===== UNHARDENED (gaps present) =====
+== Rego unit tests ==
+PASS: 35/35
+
+== Policy evaluation against /tmp/plan-unhardened.json ==
+[31mFAIL[0m - /tmp/plan-unhardened.json - compliance.hipaa.gap08 - GAP-08 [164.312(b)]: aws_apigatewayv2_stage.default has no access_log_settings; PHI endpoint activity is unrecorded
+[31mFAIL[0m - /tmp/plan-unhardened.json - compliance.hipaa.gap04 - GAP-04 [164.308(a)(7)]: aws_s3_bucket.uploads has no versioning configuration; a PHI overwrite would be unrecoverable
+[31mFAIL[0m - /tmp/plan-unhardened.json - compliance.hipaa.gap01 - GAP-01 [164.312(a)(2)(iv)]: aws_s3_bucket.uploads has no server-side encryption configuration; PHI at rest is not under customer key custody
+[31mFAIL[0m - /tmp/plan-unhardened.json - compliance.hipaa.gap05 - GAP-05 [164.312(e)(1)]: aws_lambda_function.intake has no vpc_config; PHI traffic traverses the public AWS network
+[31mFAIL[0m - /tmp/plan-unhardened.json - compliance.hipaa.gap03 - GAP-03 [164.312(e)(1)]: aws_s3_bucket.uploads has no bucket policy; PHI can be read or written over plain HTTP
+[31mFAIL[0m - /tmp/plan-unhardened.json - compliance.hipaa.gap07 - GAP-07 [164.312(a)(1)]: aws_iam_role_policy.lambda_inline grants dynamodb:* on PHI storage; handler.py calls only put_item
+[31mFAIL[0m - /tmp/plan-unhardened.json - compliance.hipaa.gap07 - GAP-07 [164.312(a)(1)]: aws_iam_role_policy.lambda_inline grants s3:* on PHI storage; handler.py calls only put_object
+
+[31m22 tests, 15 passed, 0 warnings, 7 failures, 0 exceptions[0m
+
+GATE FAIL: policy violations above must be resolved before merge
+exit code: 0
+
+===== HARDENED (gaps closed) =====
+== Rego unit tests ==
+PASS: 35/35
+
+== Policy evaluation against /tmp/plan-hardened.json ==
+
+[32m22 tests, 22 passed, 0 warnings, 0 failures, 0 exceptions[0m
+
+GATE PASS: no HIPAA policy violations in this plan
+exit code: 0
