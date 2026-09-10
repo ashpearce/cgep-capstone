@@ -1,0 +1,153 @@
+{
+  "catalog": {
+    "uuid": "dd245885-1888-433d-b35d-8ca80d2ce288",
+    "metadata": {
+      "title": "HIPAA Security Rule subset for acme-health-intake (cited via NIST SP 800-66 Rev. 2)",
+      "last-modified": "2026-09-10T18:30:00Z",
+      "version": "1.0.0",
+      "oscal-version": "1.1.3",
+      "remarks": "HIPAA has no official NIST OSCAL catalog. Per the starter's FRAMEWORKS.md this project cites NIST SP 800-66 Rev. 2 as the catalog source and carries the 45 CFR 164.x citations as props. Only the sections implemented by this workload are included; statements are paraphrased.",
+      "links": [
+        {
+          "href": "https://doi.org/10.6028/NIST.SP.800-66r2",
+          "rel": "reference",
+          "text": "NIST SP 800-66 Rev. 2, Implementing the HIPAA Security Rule"
+        },
+        {
+          "href": "https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-C",
+          "rel": "reference",
+          "text": "45 CFR Part 164 Subpart C (Security Rule)"
+        }
+      ]
+    },
+    "groups": [
+      {
+        "id": "hipaa-164.308",
+        "title": "Administrative Safeguards (164.308)",
+        "controls": [
+          {
+            "id": "hipaa-164.308-a-7",
+            "title": "164.308(a)(7) Contingency plan",
+            "props": [
+              {
+                "name": "hipaa-section",
+                "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                "value": "164.308(a)(7)"
+              },
+              {
+                "name": "source",
+                "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                "value": "NIST SP 800-66 Rev. 2 / 45 CFR Part 164 Subpart C"
+              }
+            ],
+            "parts": [
+              {
+                "id": "hipaa-164.308-a-7_smt",
+                "name": "statement",
+                "prose": "Establish and implement policies and procedures for responding to an emergency or other occurrence that damages systems containing ePHI, including a data backup plan that lets exact copies of ePHI be created and retrieved."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hipaa-164.312",
+        "title": "Technical Safeguards (164.312)",
+        "controls": [
+          {
+            "id": "hipaa-164.312-a-1",
+            "title": "164.312(a)(1) Access control",
+            "props": [
+              {
+                "name": "hipaa-section",
+                "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                "value": "164.312(a)(1)"
+              },
+              {
+                "name": "source",
+                "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                "value": "NIST SP 800-66 Rev. 2 / 45 CFR Part 164 Subpart C"
+              }
+            ],
+            "parts": [
+              {
+                "id": "hipaa-164.312-a-1_smt",
+                "name": "statement",
+                "prose": "Implement technical policies and procedures for systems that maintain ePHI so that access is limited to persons or software programs that have been granted access rights."
+              }
+            ]
+          },
+          {
+            "id": "hipaa-164.312-a-2-iv",
+            "title": "164.312(a)(2)(iv) Encryption and decryption",
+            "props": [
+              {
+                "name": "hipaa-section",
+                "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                "value": "164.312(a)(2)(iv)"
+              },
+              {
+                "name": "source",
+                "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                "value": "NIST SP 800-66 Rev. 2 / 45 CFR Part 164 Subpart C"
+              }
+            ],
+            "parts": [
+              {
+                "id": "hipaa-164.312-a-2-iv_smt",
+                "name": "statement",
+                "prose": "Implement a mechanism to encrypt and decrypt ePHI. For this workload, key custody (a customer-managed key with rotation) is treated as part of the mechanism."
+              }
+            ]
+          },
+          {
+            "id": "hipaa-164.312-b",
+            "title": "164.312(b) Audit controls",
+            "props": [
+              {
+                "name": "hipaa-section",
+                "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                "value": "164.312(b)"
+              },
+              {
+                "name": "source",
+                "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                "value": "NIST SP 800-66 Rev. 2 / 45 CFR Part 164 Subpart C"
+              }
+            ],
+            "parts": [
+              {
+                "id": "hipaa-164.312-b_smt",
+                "name": "statement",
+                "prose": "Implement hardware, software, and procedural mechanisms that record and examine activity in systems that contain or use ePHI."
+              }
+            ]
+          },
+          {
+            "id": "hipaa-164.312-e-1",
+            "title": "164.312(e)(1) Transmission security",
+            "props": [
+              {
+                "name": "hipaa-section",
+                "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                "value": "164.312(e)(1)"
+              },
+              {
+                "name": "source",
+                "ns": "https://github.com/ashpearce/cgep-capstone/ns/oscal",
+                "value": "NIST SP 800-66 Rev. 2 / 45 CFR Part 164 Subpart C"
+              }
+            ],
+            "parts": [
+              {
+                "id": "hipaa-164.312-e-1_smt",
+                "name": "statement",
+                "prose": "Implement technical security measures to guard against unauthorized access to ePHI that is being transmitted over an electronic communications network."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
