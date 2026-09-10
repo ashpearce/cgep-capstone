@@ -1,0 +1,107 @@
+name: grc-gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  TF_DIR: terraform
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC, no static keys)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+          terraform_wrapper: false
+
+      - name: Install OPA and Conftest
+        run: |
+          sudo curl -fsSL -o /usr/local/bin/opa \
+            https://github.com/open-policy-agent/opa/releases/download/v0.63.0/opa_linux_amd64_static
+          sudo chmod +x /usr/local/bin/opa
+          curl -fsSL https://github.com/open-policy-agent/conftest/releases/download/v0.50.0/conftest_0.50.0_Linux_x86_64.tar.gz \
+            | sudo tar -xz -C /usr/local/bin conftest
+
+      # ---------- STEP 1: PLAN ----------
+      - name: Plan
+        id: plan
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          terraform init -input=false
+          terraform plan -input=false -out=tfplan
+          terraform show -json tfplan > plan.json
+
+      # ---------- STEP 2: POLICY GATE ----------
+      # Its exit code decides whether apply runs.
+      - name: Policy gate
+        id: gate
+        run: bash scripts/policy-gate.sh ${{ env.TF_DIR }}/plan.json
+
+      # ---------- STEP 3: APPLY ON MERGE ----------
+      # Only on push to main, and only if the gate passed.
+      - name: Apply
+        id: apply
+        if: github.event_name == 'push' && steps.gate.outcome == 'success'
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform apply -input=false -auto-approve tfplan
+
+      # ---------- STEP 4: SIGN ----------
+      # always() so a FAILING run still produces signed evidence.
+      - uses: sigstore/cosign-installer@v3
+        if: always()
+
+      - name: Bundle and sign evidence
+        id: sign
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p bundle
+          cp ${{ env.TF_DIR }}/plan.json bundle/ 2>/dev/null || echo '{}' > bundle/plan.json
+          cp evidence/gate-proof.txt bundle/ 2>/dev/null || true
+          echo "${{ github.sha }}" > bundle/commit.txt
+          echo "${{ steps.gate.outcome }}" > bundle/gate-outcome.txt
+
+          BUNDLE="evidence-${{ github.run_id }}-${{ github.sha }}.tar.gz"
+          tar -czf "$BUNDLE" bundle/
+          sha256sum "$BUNDLE" | cut -d' ' -f1 > "$BUNDLE.sha256"
+
+          COSIGN_EXPERIMENTAL=1 cosign sign-blob --yes \
+            --bundle "$BUNDLE.sig.bundle" "$BUNDLE"
+
+          echo "bundle=$BUNDLE" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(cat $BUNDLE.sha256)" >> "$GITHUB_OUTPUT"
+
+      # ---------- STEP 5: UPLOAD ----------
+      - name: Upload to evidence vault
+        if: always()
+        run: |
+          set -euo pipefail
+          B="${{ steps.sign.outputs.bundle }}"
+          KEY="runs/${{ github.run_id }}/$B"
+
+          aws s3 cp "$B"             "s3://${{ vars.EVIDENCE_VAULT }}/$KEY"
+          aws s3 cp "$B.sha256"      "s3://${{ vars.EVIDENCE_VAULT }}/$KEY.sha256"
+          aws s3 cp "$B.sig.bundle"  "s3://${{ vars.EVIDENCE_VAULT }}/$KEY.sig.bundle"
+
+          VERSION_ID=$(aws s3api head-object \
+            --bucket "${{ vars.EVIDENCE_VAULT }}" --key "$KEY" \
+            --query VersionId --output text)
+
+          cat > receipt.json <
