@@ -1,80 +1,61 @@
-# cgep-app-starter
+# cgep-capstone — HIPAA evidence pipeline for a patient-intake workload
 
-> Patient Intake API for "Acme Health". The deliberately-flawed workload your **CGE-P capstone** wraps with GRC controls.
+CGE-P capstone submission by Ashley Pearce. Fork of `GRCEngClub/cgep-app-starter`.
 
-## What this is
+**Framework:** HIPAA Security Rule, cited via NIST SP 800-66 Rev. 2
+**Gaps closed:** 7 of 8 (GAP-06 declined — no HIPAA citation; see `WRITEUP.md`)
+**Evidence anchor:** run `34511736584`, commit `70f782671404c324beeacabbc41d0e7813368c9d`
 
-A minimal AWS workload: VPC, Lambda, API Gateway, DynamoDB, S3. It ingests patient intake submissions over HTTPS. Think of it as a system you have just inherited from an engineering team and been asked to make audit-defensible.
+Full narrative, decisions and findings: **[`WRITEUP.md`](WRITEUP.md)**.
 
-This repository ships **non-compliant on purpose**. Your job in the capstone is not to rewrite this app. Your job is to wrap it with the four CGE-P layers (Terraform GRC baseline, Rego policies, GitHub Actions evidence pipeline, OSCAL component) so the same workload becomes audit-defensible against HIPAA, SOC 2, and CMMC L2.
+## What happens on every PR and merge
 
-## The deploy gate
+`.github/workflows/grc-gate.yml` — one job: **plan → policy gate → apply (merge only) → sign → upload → enforce**.
 
-If you cannot deploy this starter, you cannot pass the capstone. Real GRC engineers inherit working systems. Step zero is making the system run.
+- Seven Rego policies (`policies/`) evaluate the Terraform plan's `planned_values`. Their exit code is the gate.
+- On merge to `main`, the plan is applied.
+- Every run — passing or failing — produces a signed evidence bundle (cosign keyless, Rekor-logged) in a COMPLIANCE-mode Object Lock vault, plus a `receipt.json` that pins the bundle's S3 version ID.
+- A repository ruleset on `main` requires the `gate` check; merging a failing PR is not possible.
+
+**Red PR:** [#3](https://github.com/ashpearce/cgep-capstone/pull/3) reintroduces GAP-02 and is left open unmerged. The gate fails and the merge button is disabled.
+
+## Verify it yourself
+
+Requires AWS credentials for account `670163018466` (profile `cgep-sandbox` in the commands below), `cosign`, `jq`, `opa`, `conftest` and `trestle`. `.devcontainer/post-create.sh` installs the tools.
 
 ```bash
-git clone https://github.com/GRCEngClub/cgep-app-starter
-cd cgep-app-starter
+# 1. Evidence chain for the apply run: integrity, authenticity, preservation
+EVIDENCE_VAULT=acme-health-intake-evidence-8e35a7ab \
+  bash scripts/verify-evidence.sh 34511736584 --profile cgep-sandbox
+# expect: PASS integrity / PASS authenticity / PASS preservation / CHAIN INTACT
 
-# Confirm you're authenticated to the right account:
-make creds AWS_PROFILE=<your-sandbox-profile>
+# 2. Policy suite: 35 unit tests, then the gate fails closed on the broken fixture
+opa test ./policies -v
+bash scripts/policy-gate.sh policies/fixtures/plan-gaps.json   # exits non-zero
 
-make deploy AWS_PROFILE=<your-sandbox-profile>
-make test    AWS_PROFILE=<your-sandbox-profile>
+# 3. OSCAL: catalog, profile and component definition validate with trestle
+bash scripts/validate-oscal.sh                                 # 3 x VALID
+
+# 4. App still works after hardening
+make test AWS_PROFILE=cgep-sandbox                             # returns a submission_id
 ```
 
-> **AWS SSO note:** if your profile is SSO-based, Terraform's AWS provider can fail to read it directly with `failed to find SSO session section`. The Makefile's `eval $(aws configure export-credentials)` pattern handles this. If you're running `terraform` commands by hand, do the same export first.
-
-Expected output of `make test`:
-
-```json
-{
-    "submission_id": "f1e3...",
-    "status": "received"
-}
-```
-
-When you're done exploring: `make destroy`.
-
-## What you build on top
-
-Fork the repo into your own `cgep-capstone` and add:
-
-1. **Layer 1 — GRC baseline (Terraform).** KMS keys, an S3 evidence vault with Object Lock, a CloudTrail trail. Bring this starter's data stores under your CMK.
-2. **Layer 2 — OPA policy suite (Rego).** Five or more policies that catch the named gaps in [GAPS.md](GAPS.md). Each policy maps to at least one control from the framework you choose.
-3. **Layer 3 — GitHub Actions pipeline.** Plan → Conftest gate → apply → Cosign sign → upload to vault.
-4. **Layer 4 — OSCAL component.** A `component-definition.json` describing how your governed system implements its controls.
-
-Full brief: `docs/labs/07_01_capstone_brief.md` in the course content repo.
-
-## Framework mapping is required
-
-Your capstone must declare a primary framework: **HIPAA Security Rule**, **SOC 2 Trust Services Criteria**, or **CMMC Level 2**. Every policy carries at least one control ID from your chosen framework. Your OSCAL component's `control-implementations` reference your framework's catalog.
-
-A starter mapping is in [FRAMEWORKS.md](FRAMEWORKS.md). It is not the only valid mapping. You're expected to defend yours.
-
-## Cost
-
-Roughly $0 if destroyed within an hour. Lambda + API Gateway + DynamoDB + S3 are all pay-per-use, and an empty deployment generates no traffic. CloudTrail (which you add) costs cents.
+Any run ID from the vault works with `verify-evidence.sh`, including the red PR's failing runs — the bundle is produced before the job fails.
 
 ## Layout
 
-```
-cgep-app-starter/
-├── README.md            # this file
-├── WORKLOAD.md          # what the API does
-├── GAPS.md              # the named flaws your policies must catch
-├── FRAMEWORKS.md        # HIPAA / SOC 2 / CMMC mapping primer
-├── Makefile             # make deploy | test | destroy
-├── terraform/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   └── lambda/handler.py
-└── test/
-    └── intake.sh
-```
+| Path | What |
+|---|---|
+| `terraform/` | Starter workload plus `kms.tf`, `evidence-vault.tf`, `cloudtrail.tf`, `oidc-trust.tf`, `hardening.tf`, `backend.tf` (S3 state), `state-backend-iam.tf` |
+| `policies/` | `gapNN_*.rego` policies, `tests/` (35 tests), `fixtures/plan-gaps.json` (the broken starter as a plan) |
+| `scripts/policy-gate.sh` | `opa test` + `conftest test --all-namespaces`; exit code is the decision |
+| `scripts/verify-evidence.sh` | Fetches the bundle **by S3 version ID** from the receipt and checks it |
+| `scripts/oscal-fill-evidence.sh` | Fills the OSCAL evidence props from a run's `receipt.json` |
+| `scripts/validate-oscal.sh` | trestle validation in a throwaway workspace |
+| `oscal/` | `catalogs/hipaa-security-rule.json` → `profiles/hipaa-intake.json` → `components/acme-intake.json` |
+| `evidence/` | Local proofs: post-hardening `make test`, gate-proof on both fixtures |
+| `GAPS.md`, `FRAMEWORKS.md`, `DESIGN.md` | Starter brief, framework rules, design notes |
 
-## License
+## Do not tear down
 
-MIT. Fork freely. Submissions remain learners' own work.
+Infrastructure stays up until graded. The grader pulls a run and verifies it against the live vault.
