@@ -53,17 +53,29 @@ resource "aws_iam_role_policy" "gate_iam" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "iam:GetRole", "iam:PassRole", "iam:CreateRole", "iam:DeleteRole",
-        "iam:AttachRolePolicy", "iam:DetachRolePolicy",
-        "iam:PutRolePolicy", "iam:DeleteRolePolicy",
-        "iam:GetRolePolicy", "iam:ListRolePolicies",
-        "iam:ListAttachedRolePolicies", "iam:TagRole"
-      ]
-      Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.name_prefix}-*"
-    }]
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole", "iam:PassRole", "iam:CreateRole", "iam:DeleteRole",
+          "iam:AttachRolePolicy", "iam:DetachRolePolicy",
+          "iam:PutRolePolicy", "iam:DeleteRolePolicy",
+          "iam:GetRolePolicy", "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies", "iam:TagRole",
+          "iam:ListInstanceProfilesForRole"
+        ]
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${local.name_prefix}-*"
+      },
+      {
+        Sid    = "ReadOidcProvider"
+        Effect = "Allow"
+        Action = [
+          "iam:ListOpenIDConnectProviders",
+          "iam:GetOpenIDConnectProvider"
+        ]
+        Resource = "*"
+      }
+    ]
   })
 }
 

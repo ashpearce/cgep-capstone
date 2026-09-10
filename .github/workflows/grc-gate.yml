@@ -104,4 +104,4 @@ jobs:
             --bucket "${{ vars.EVIDENCE_VAULT }}" --key "$KEY" \
             --query VersionId --output text)
 
-          cat > receipt.json <
+          cat > receipt.json <<-EOF
