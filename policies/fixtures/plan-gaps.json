@@ -1,0 +1,43 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.9.8",
+  "planned_values": {
+    "root_module": {
+      "resources": [
+        {
+          "address": "aws_s3_bucket.uploads",
+          "type": "aws_s3_bucket",
+          "name": "uploads",
+          "values": { "bucket": "acme-health-intake-uploads-8e35a7ab" }
+        },
+        {
+          "address": "aws_dynamodb_table.intake",
+          "type": "aws_dynamodb_table",
+          "name": "intake",
+          "values": { "name": "acme-health-intake-submissions-8e35a7ab" }
+        },
+        {
+          "address": "aws_lambda_function.intake",
+          "type": "aws_lambda_function",
+          "name": "intake",
+          "values": { "function_name": "acme-health-intake-handler-8e35a7ab" }
+        },
+        {
+          "address": "aws_iam_role_policy.lambda_inline",
+          "type": "aws_iam_role_policy",
+          "name": "lambda_inline",
+          "values": {
+            "name": "intake-data-access",
+            "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":\"dynamodb:*\",\"Resource\":\"arn:aws:dynamodb:us-east-1:670163018466:table/acme-health-intake-submissions-8e35a7ab\"},{\"Effect\":\"Allow\",\"Action\":\"s3:*\",\"Resource\":\"arn:aws:s3:::acme-health-intake-uploads-8e35a7ab\"}]}"
+          }
+        },
+        {
+          "address": "aws_apigatewayv2_stage.default",
+          "type": "aws_apigatewayv2_stage",
+          "name": "default",
+          "values": { "name": "$default", "auto_deploy": true }
+        }
+      ]
+    }
+  }
+}

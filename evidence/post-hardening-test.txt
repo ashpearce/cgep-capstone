@@ -1,0 +1,5 @@
+POST https://ljo22p4zr2.execute-api.us-east-1.amazonaws.com/intake
+{
+    "submission_id": "94fb89a6-557c-48fd-bac8-fb826fb08b47",
+    "status": "received"
+}
