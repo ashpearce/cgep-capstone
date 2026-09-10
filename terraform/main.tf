@@ -115,7 +115,6 @@ resource "aws_dynamodb_table" "intake" {
   # HIPAA 164.312(a)(2)(iv).
   server_side_encryption {
     enabled     = true
-    kms_key_arn = aws_kms_key.phi.arn
   }
 }
 
