@@ -23,7 +23,7 @@ data "aws_iam_policy_document" "gate_trust" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:ashpearce@173481668/cgep-capstone@1363328243:ref:refs/heads/main"]
+      values   = ["repo:ashpearce@*/cgep-capstone@*:*"]
     }
 
     condition {
